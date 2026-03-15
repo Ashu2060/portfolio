@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DocVault – Document Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap');
+  :root{--bg:#f0f2f5;--surface:#fff;--surface2:#e8eaf0;--border:#d0d4de;--text:#1a1d2e;--text2:#5a5f7a;--accent:#1a6ef5;--accent2:#0d4fc0;--accent-light:#e6f0ff;--danger:#e53e3e;--pdf:#e53e3e;--word:#2563eb;--excel:#16a34a;--ppt:#d97706;--txt:#7c3aed;--shadow:0 2px 8px rgba(0,0,0,.10);--shadow-lg:0 8px 24px rgba(0,0,0,.14);--radius:12px}
+  .dark{--bg:#0f1117;--surface:#1a1d2e;--surface2:#242740;--border:#2e3250;--text:#e8eaf5;--text2:#8b90b0;--accent:#4d8af8;--accent2:#6fa0ff;--accent-light:#1a2540;--shadow:0 2px 8px rgba(0,0,0,.4);--shadow-lg:0 8px 24px rgba(0,0,0,.5)}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;overflow-x:hidden}
+  .phone-shell{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;display:flex;flex-direction:column}
+  /* STATUS */
+  .status-bar{background:var(--accent);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:6px 16px 4px;font-size:11px;font-weight:700;letter-spacing:.4px}
+  .status-icons{display:flex;gap:6px;align-items:center}
+  /* TOPBAR */
+  .topbar{background:var(--accent);color:#fff;padding:10px 16px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(26,110,245,.3)}
+  .topbar-back{background:rgba(255,255,255,.18);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;flex-shrink:0}
+  .topbar-title{font-size:18px;font-weight:800;flex:1}
+  .topbar-sub{font-size:12px;opacity:.8;font-weight:600}
+  .topbar-actions{display:flex;gap:8px}
+  .topbar-btn{background:rgba(255,255,255,.18);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .15s}
+  .topbar-btn:hover{background:rgba(255,255,255,.28)}
+  /* MAIN */
+  .main{flex:1;overflow-y:auto;padding-bottom:72px}
+  .main::-webkit-scrollbar{width:4px}
+  .main::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  /* SEARCH */
+  .search-wrap{padding:12px 14px 6px;position:sticky;top:0;z-index:10;background:var(--bg)}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:10px 14px;box-shadow:var(--shadow);transition:border-color .2s}
+  .search-box:focus-within{border-color:var(--accent)}
+  .search-box input{border:none;outline:none;background:transparent;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);flex:1;width:100%}
+  .search-box input::placeholder{color:var(--text2)}
+  .search-clear{cursor:pointer;color:var(--text2);background:none;border:none;font-size:16px}
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px 4px}
+  .stat-card{background:var(--surface);border-radius:var(--radius);padding:12px 10px;text-align:center;box-shadow:var(--shadow);border:1.5px solid var(--border)}
+  .stat-num{font-size:20px;font-weight:900;color:var(--accent)}
+  .stat-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  /* SECTION */
+  .section-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 8px}
+  .section-title{font-size:14px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.8px}
+  .section-action{font-size:13px;font-weight:700;color:var(--accent);cursor:pointer}
+  /* CHIPS */
+  .chips-row{display:flex;gap:8px;overflow-x:auto;padding:0 14px 12px;scrollbar-width:none}
+  .chips-row::-webkit-scrollbar{display:none}
+  .chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:40px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;border:2px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s;box-shadow:var(--shadow)}
+  .chip.active{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(26,110,245,.35)}
+  .chip-dot{width:8px;height:8px;border-radius:50%}
+  /* SORT */
+  .sort-bar{display:flex;gap:6px;padding:4px 14px 10px;align-items:center;overflow-x:auto;scrollbar-width:none}
+  .sort-bar::-webkit-scrollbar{display:none}
+  .sort-lbl{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+  .sort-chip{padding:5px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .15s}
+  .sort-chip.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+  /* FILE LIST */
+  .file-list{padding:0 14px;display:flex;flex-direction:column;gap:8px}
+  .file-card{background:var(--surface);border-radius:var(--radius);padding:12px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+  .file-card:hover{border-color:var(--accent);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+  .file-card.fav::after{content:'';position:absolute;top:0;right:0;border-top:24px solid #f59e0b;border-left:24px solid transparent}
+  .file-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0;font-family:'Courier Prime',monospace;letter-spacing:.5px;position:relative;overflow:hidden}
+  .fi-pdf{background:linear-gradient(135deg,#e53e3e,#c53030)}
+  .fi-docx,.fi-doc{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
+  .fi-xlsx,.fi-xls{background:linear-gradient(135deg,#16a34a,#15803d)}
+  .fi-pptx,.fi-ppt{background:linear-gradient(135deg,#d97706,#b45309)}
+  .fi-txt,.fi-md,.fi-csv{background:linear-gradient(135deg,#7c3aed,#6d28d9)}
+  .fi-other{background:linear-gradient(135deg,#64748b,#475569)}
+  .file-info{flex:1;min-width:0}
+  .file-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-meta{display:flex;gap:6px;margin-top:3px;flex-wrap:wrap}
+  .file-meta span{font-size:11px;font-weight:600;color:var(--text2)}
+  .file-actions-btn{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;border-radius:6px;transition:background .1s}
+  .file-actions-btn:hover{background:var(--surface2)}
+  /* NAV */
+  .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--surface);border-top:2px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 10px;z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;border-radius:10px;font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;transition:color .15s;position:relative}
+  .nav-item svg{width:22px;height:22px}
+  .nav-item.active{color:var(--accent)}
+  .nav-badge{position:absolute;top:0;right:10px;background:var(--danger);color:#fff;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  /* OVERLAY / PANEL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;max-width:480px;left:50%;transform:translateX(-50%)}
+  .overlay.show{display:flex}
+  .panel{background:var(--surface);border-radius:20px 20px 0 0;width:100%;padding:20px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .panel-handle{width:40px;height:5px;background:var(--border);border-radius:3px;margin:0 auto 16px}
+  .panel-title{font-size:17px;font-weight:900;margin-bottom:16px}
+  .info-icon-big{width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;margin:0 auto 14px;font-family:'Courier Prime',monospace}
+  .info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1.5px solid var(--border);font-size:14px;gap:10px}
+  .info-row:last-child{border-bottom:none}
+  .info-label{color:var(--text2);font-weight:700;flex-shrink:0}
+  .info-value{color:var(--text);font-weight:800;text-align:right;word-break:break-all}
+  .action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+  .action-btn{display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);transition:all .15s}
+  .action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+  .action-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:#fff5f5}
+  .action-btn svg{width:18px;height:18px;flex-shrink:0}
+  .action-btn.full{grid-column:1/-1;justify-content:center;background:var(--accent);color:#fff;border-color:var(--accent)}
+  .action-btn.full:hover{background:var(--accent2);border-color:var(--accent2)}
+  /* VIEWER */
+  .viewer-panel{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;max-width:480px;left:50%;transform:translateX(-50%)}
+  .viewer-panel.show{display:flex}
+  .viewer-topbar{background:var(--accent);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(26,110,245,.3);flex-shrink:0}
+  .viewer-content{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .viewer-content iframe{width:100%;height:100%;border:none;flex:1}
+  .txt-view{background:#1a1a2e;color:#e0e0ff;padding:20px;font-family:'Courier Prime',monospace;font-size:13px;line-height:1.9;flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+  .csv-view{flex:1;overflow:auto;background:var(--surface)}
+  .csv-table{border-collapse:collapse;width:100%;font-size:12px;font-family:'Courier Prime',monospace}
+  .csv-table th{background:#217346;color:#fff;font-weight:800;padding:8px 12px;text-align:left;border:1px solid #1a5c38;position:sticky;top:0;z-index:1}
+  .csv-table td{padding:7px 12px;border:1px solid var(--border)}
+  .csv-table tr:nth-child(even) td{background:var(--surface2)}
+  .unsupported-view{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:30px;text-align:center}
+  .unsupported-icon{font-size:56px}
+  .unsupported-title{font-size:16px;font-weight:800;word-break:break-all}
+  .unsupported-sub{font-size:13px;color:var(--text2);font-weight:600;line-height:1.6;max-width:300px}
+  .dl-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:14px 28px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(26,110,245,.4);transition:all .15s;text-decoration:none;display:inline-block}
+  .dl-btn:hover{background:var(--accent2)}
+  /* IMPORT SCREEN */
+  .import-screen{padding:20px 14px;display:flex;flex-direction:column;gap:14px}
+  .import-hero{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;padding:24px 20px;color:#fff;text-align:center}
+  .import-hero-icon{font-size:44px;margin-bottom:10px}
+  .import-hero h2{font-size:20px;font-weight:900;margin-bottom:6px}
+  .import-hero p{font-size:13px;opacity:.85;font-weight:600;line-height:1.6}
+  .import-method{background:var(--surface);border-radius:var(--radius);border:2px solid var(--border);padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .import-method:hover{border-color:var(--accent);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+  .import-method-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+  .im-folder{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+  .im-files{background:linear-gradient(135deg,#34d399,#10b981)}
+  .im-drop{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+  .import-method-text h3{font-size:15px;font-weight:800;margin-bottom:3px}
+  .import-method-text p{font-size:12px;color:var(--text2);font-weight:600;line-height:1.4}
+  .import-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;border:1.5px solid}
+  .badge-chrome{background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
+  .badge-all{background:#e6fff5;color:#16a34a;border-color:#16a34a}
+  .scan-progress{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);padding:14px}
+  .prog-header{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;justify-content:space-between}
+  .progress-bar{width:100%;background:var(--surface2);border-radius:8px;height:10px;overflow:hidden;border:1.5px solid var(--border)}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:8px;width:0%;transition:width .1s}
+  .scan-log{font-size:11px;font-family:'Courier Prime',monospace;color:var(--text2);margin-top:8px;min-height:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* DRAG OVERLAY */
+  .drag-overlay{position:fixed;inset:0;background:rgba(26,110,245,.12);border:4px dashed var(--accent);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;max-width:480px;left:50%;transform:translateX(-50%)}
+  .drag-overlay.active{display:flex}
+  /* RENAME */
+  .rename-input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;background:var(--surface2);color:var(--text);outline:none;margin-bottom:14px;transition:border-color .2s}
+  .rename-input:focus{border-color:var(--accent)}
+  /* SETTINGS */
+  .settings-item{display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--surface);border-radius:var(--radius);margin-bottom:8px;border:1.5px solid var(--border);cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s}
+  .settings-item:hover{border-color:var(--accent)}
+  .settings-item-left{display:flex;align-items:center;gap:12px}
+  .settings-item-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .settings-item-title{font-size:15px;font-weight:700}
+  .settings-item-sub{font-size:12px;color:var(--text2);font-weight:600}
+  .toggle{width:44px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0}
+  .toggle.on{background:var(--accent)}
+  .toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  .toggle.on::after{left:21px}
+  /* EMPTY */
+  .empty-state{display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:12px;text-align:center}
+  .empty-icon{width:64px;height:64px;background:var(--surface2);border-radius:16px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--border)}
+  .empty-title{font-size:16px;font-weight:800;color:var(--text2)}
+  .empty-sub{font-size:13px;color:var(--text2);font-weight:600}
+  /* TOAST */
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1d2e;color:#fff;border-radius:var(--radius);padding:10px 20px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:all .3s;pointer-events:none;max-width:340px;text-align:center;box-shadow:var(--shadow-lg)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #file-input,#folder-input{display:none}
+  .no-select{user-select:none}
+</style>
+</head>
+<body>
+<div class="phone-shell" id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span id="clock">9:41 AM</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      <span style="font-size:10px;font-weight:800">87%</span>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="page-home" class="main">
+    <div class="topbar">
+      <div style="flex:1"><div class="topbar-title">📁 DocVault</div><div class="topbar-sub" id="topbar-sub">Your Document Hub</div></div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" onclick="toggleDark()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+        <button class="topbar-btn" onclick="showPage('page-settings')"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- IMPORT SCREEN -->
+    <div id="import-screen" class="import-screen">
+      <div class="import-hero">
+        <div class="import-hero-icon">📁</div>
+        <h2>Load Your Real Files</h2>
+        <p>Choose how to import documents from your laptop.<br>Everything stays 100% offline — no uploads, no server.</p>
+      </div>
+
+      <div class="import-method" onclick="triggerFolder()">
+        <div class="import-method-icon im-folder">📂</div>
+        <div class="import-method-text">
+          <h3>Scan a Folder</h3>
+          <p>Pick an entire folder. DocVault will scan all documents inside it, including sub-folders.</p>
+        </div>
+        <div class="import-badge badge-chrome">Chrome / Edge</div>
+      </div>
+
+      <div class="import-method" onclick="triggerFilePicker()">
+        <div class="import-method-icon im-files">📄</div>
+        <div class="import-method-text">
+          <h3>Pick Files</h3>
+          <p>Select one or multiple documents from anywhere on your laptop. Works in all browsers.</p>
+        </div>
+        <div class="import-badge badge-all">All Browsers</div>
+      </div>
+
+      <div class="import-method" style="border-style:dashed;border-width:2px;cursor:default">
+        <div class="import-method-icon im-drop">🖱️</div>
+        <div class="import-method-text">
+          <h3>Drag &amp; Drop</h3>
+          <p>Drag files or an entire folder from File Explorer / Finder and drop them anywhere on this page.</p>
+        </div>
+        <div class="import-badge" style="background:#fdf4ff;color:#7c3aed;border-color:#7c3aed">Drop Anywhere</div>
+      </div>
+
+      <div class="scan-progress" id="scan-progress" style="display:none">
+        <div class="prog-header"><span id="scan-status-txt">Scanning…</span><span id="scan-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="scan-log" id="scan-log"></div>
+      </div>
+
+      <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv" onchange="handleFilePicker(this.files)">
+      <input type="file" id="folder-input" webkitdirectory multiple onchange="handleFilePicker(this.files)">
+    </div>
+
+    <!-- FILES SECTION (shown after load) -->
+    <div id="files-section" style="display:none">
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text2)"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="search-input" placeholder="Search documents…" oninput="filterFiles()">
+          <button class="search-clear" id="search-clear-btn" onclick="clearSearch()" style="display:none">✕</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-size">0 MB</div><div class="stat-lbl">Size</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-recent">0</div><div class="stat-lbl">Recent</div></div>
+      </div>
+      <div class="section-hdr"><span class="section-title">Categories</span><span class="section-action" onclick="triggerFilePicker()">+ Add More</span></div>
+      <div class="chips-row">
+        <div class="chip active" data-cat="all" onclick="setCategory(this)">📂 All</div>
+        <div class="chip" data-cat="pdf" onclick="setCategory(this)"><span class="chip-dot" style="background:var(--pdf)"></span> PDF</div>
+        <div class="chip" data-cat="word" onclick="setCategory(this)"><span class="chip-dot" style="background:var(--word)"></span> Word</div>
+        <div class="chip" data-cat="excel" onclick="setCategory(this)"><span class="chip-dot" style="background:var(--excel)"></span> Excel</div>
+        <div class="chip" data-cat="ppt" onclick="setCategory(this)"><span class="chip-dot" style="background:var(--ppt)"></span> PPT</div>
+        <div class="chip" data-cat="txt" onclick="setCategory(this)"><span class="chip-dot" style="background:var(--txt)"></span> Text</div>
+        <div class="chip" data-cat="recent" onclick="setCategory(this)">🕐 Recent</div>
+        <div class="chip" data-cat="fav" onclick="setCategory(this)">⭐ Favorites</div>
+      </div>
+      <div class="sort-bar">
+        <span class="sort-lbl">Sort:</span>
+        <div class="sort-chip active" data-sort="name" onclick="setSort(this)">Name</div>
+        <div class="sort-chip" data-sort="date" onclick="setSort(this)">Date</div>
+        <div class="sort-chip" data-sort="size" onclick="setSort(this)">Size</div>
+        <div class="sort-chip" data-sort="type" onclick="setSort(this)">Type</div>
+      </div>
+      <div class="file-list" id="file-list"></div>
+      <div id="empty-state-files" class="empty-state" style="display:none">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" style="color:var(--text2)"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg></div>
+        <div class="empty-title">No files found</div>
+        <div class="empty-sub">Try a different category or search term</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAVORITES PAGE -->
+  <div id="page-favorites" class="main" style="display:none">
+    <div class="topbar"><div style="flex:1"><div class="topbar-title">⭐ Favorites</div><div class="topbar-sub">Starred documents</div></div></div>
+    <div style="padding-top:14px">
+      <div class="file-list" id="fav-list"></div>
+      <div id="fav-empty" class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" style="color:var(--text2)"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div><div class="empty-title">No favorites yet</div><div class="empty-sub">Tap ⋮ on any file → ⭐ Favorite</div></div>
+    </div>
+  </div>
+
+  <!-- RECENT PAGE -->
+  <div id="page-recent" class="main" style="display:none">
+    <div class="topbar"><div style="flex:1"><div class="topbar-title">🕐 Recent</div><div class="topbar-sub">Recently opened</div></div></div>
+    <div style="padding-top:14px">
+      <div class="file-list" id="recent-list"></div>
+      <div id="recent-empty" class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" style="color:var(--text2)"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg></div><div class="empty-title">Nothing opened yet</div><div class="empty-sub">Open a document to see it here</div></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="page-settings" class="main" style="display:none">
+    <div class="topbar">
+      <button class="topbar-back" onclick="showPage('page-home')"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+      <div style="flex:1"><div class="topbar-title">Settings</div></div>
+    </div>
+    <div style="padding:14px">
+      <div class="section-hdr" style="padding:0 0 10px"><span class="section-title">Appearance</span></div>
+      <div class="settings-item" onclick="toggleDark()">
+        <div class="settings-item-left">
+          <div class="settings-item-icon" style="background:#1a2540"><svg viewBox="0 0 24 24" fill="#4d8af8" width="20" height="20"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg></div>
+          <div><div class="settings-item-title">Dark Mode</div><div class="settings-item-sub">Switch to dark theme</div></div>
+        </div>
+        <button class="toggle" id="dark-toggle" onclick="event.stopPropagation();toggleDark()"></button>
+      </div>
+      <div class="section-hdr" style="padding:14px 0 10px"><span class="section-title">Import Files</span></div>
+      <div class="settings-item" onclick="triggerFolder();showPage('page-home')">
+        <div class="settings-item-left"><div class="settings-item-icon" style="background:#fffbeb;font-size:20px">📂</div><div><div class="settings-item-title">Scan Folder</div><div class="settings-item-sub">Chrome/Edge — scans all sub-folders</div></div></div>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text2)"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </div>
+      <div class="settings-item" onclick="triggerFilePicker();showPage('page-home')">
+        <div class="settings-item-left"><div class="settings-item-icon" style="background:#e6fff5;font-size:20px">📄</div><div><div class="settings-item-title">Add Files</div><div class="settings-item-sub">All browsers — pick any documents</div></div></div>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text2)"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </div>
+      <div class="settings-item" onclick="clearAll()">
+        <div class="settings-item-left"><div class="settings-item-icon" style="background:#fff5f5"><svg viewBox="0 0 24 24" fill="#e53e3e" width="20" height="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div><div><div class="settings-item-title">Clear All Files</div><div class="settings-item-sub">Remove all loaded documents</div></div></div>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text2)"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </div>
+      <div class="section-hdr" style="padding:14px 0 10px"><span class="section-title">About</span></div>
+      <div class="settings-item" style="cursor:default">
+        <div class="settings-item-left"><div class="settings-item-icon" style="background:#e6f0ff;font-size:20px">📁</div><div><div class="settings-item-title">DocVault v2.0</div><div class="settings-item-sub">100% offline · No uploads · No server</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="showPage('page-home')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</div>
+    <div class="nav-item" id="nav-recent" onclick="showPage('page-recent')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>Recent<span class="nav-badge" id="recent-badge" style="display:none">0</span></div>
+    <div class="nav-item" id="nav-favorites" onclick="showPage('page-favorites')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>Favorites<span class="nav-badge" id="fav-badge" style="display:none">0</span></div>
+    <div class="nav-item" id="nav-settings" onclick="showPage('page-settings')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</div>
+  </nav>
+</div>
+
+<!-- INFO PANEL -->
+<div class="overlay" id="info-panel-overlay" onclick="closePanel()">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="panel-handle"></div>
+    <div class="info-icon-big" id="info-icon"></div>
+    <div class="panel-title" id="info-fname" style="text-align:center;word-break:break-all"></div>
+    <div id="info-rows"></div>
+    <div class="action-grid">
+      <button class="action-btn full" onclick="openFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>Open &amp; View</button>
+      <button class="action-btn" id="fav-action-btn" onclick="toggleFavFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>Favorite</button>
+      <button class="action-btn" onclick="downloadFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Download</button>
+      <button class="action-btn" onclick="renameFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Rename</button>
+      <button class="action-btn danger" onclick="deleteFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- RENAME PANEL -->
+<div class="overlay" id="rename-panel-overlay" onclick="closeRenamePanel()">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="panel-handle"></div>
+    <div class="panel-title">✏️ Rename File</div>
+    <input type="text" class="rename-input" id="rename-input" placeholder="New file name">
+    <div style="display:flex;gap:10px">
+      <button class="action-btn" style="flex:1;justify-content:center" onclick="closeRenamePanel()">Cancel</button>
+      <button class="action-btn full" style="flex:1" onclick="confirmRename()">✓ Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEWER -->
+<div class="viewer-panel" id="viewer-panel">
+  <div class="viewer-topbar">
+    <button class="topbar-back" onclick="closeViewer()"><svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+    <div style="flex:1;min-width:0"><div class="topbar-title" id="viewer-title" style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><div class="topbar-sub" id="viewer-type"></div></div>
+    <button class="topbar-btn" onclick="downloadFile()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
+  </div>
+  <div class="viewer-content" id="viewer-content"></div>
+</div>
+
+<!-- DRAG OVERLAY -->
+<div class="drag-overlay" id="drag-overlay">
+  <div style="font-size:64px">📂</div>
+  <div style="font-size:22px;font-weight:900;color:var(--accent)">Drop Files Here</div>
+  <div style="font-size:14px;color:var(--text2);font-weight:700">PDF · Word · Excel · PPT · TXT · CSV · MD</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPPORTED=['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md','csv'];
+let FILES=[]; let nextId=1;
+let currentCat='all',currentSort='name',searchTerm='',selectedFile=null,recentOpened=[],isDark=false;
+
+// Clock
+function tick(){const n=new Date();let h=n.getHours(),m=n.getMinutes(),a='AM';if(h>=12){a='PM';if(h>12)h-=12;}if(h===0)h=12;document.getElementById('clock').textContent=`${h}:${m.toString().padStart(2,'0')} ${a}`;}
+setInterval(tick,10000);tick();
+
+// ── TRIGGERS ──
+function triggerFolder(){
+  if('showDirectoryPicker' in window){pickDirectory();}
+  else{document.getElementById('folder-input').click();}
+}
+function triggerFilePicker(){document.getElementById('file-input').click();}
+
+// ── FOLDER PICKER (File System Access API) ──
+async function pickDirectory(){
+  try{
+    const dir=await window.showDirectoryPicker({mode:'read'});
+    const items=[];
+    await walkDirHandle(dir,dir.name+'/',items);
+    if(!items.length){showToast('⚠️ No supported documents in that folder');return;}
+    processRealFiles(items);
+  }catch(e){if(e.name!=='AbortError')showToast('Could not open folder: '+e.message);}
+}
+async function walkDirHandle(handle,path,out){
+  for await(const entry of handle.values()){
+    if(entry.kind==='file'){
+      const ext=entry.name.split('.').pop().toLowerCase();
+      if(SUPPORTED.includes(ext)){const f=await entry.getFile();out.push({file:f,path});}
+    } else if(entry.kind==='directory'){
+      await walkDirHandle(entry,path+entry.name+'/',out);
+    }
+  }
+}
+
+// ── FILE INPUT ──
+function handleFilePicker(fileList){
+  const items=[];
+  for(const file of fileList){
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(SUPPORTED.includes(ext)){
+      const rel=file.webkitRelativePath||file.name;
+      const path=rel.includes('/')?rel.substring(0,rel.lastIndexOf('/')+1):'/';
+      items.push({file,path});
+    }
+  }
+  if(!items.length){showToast('⚠️ No supported documents found');return;}
+  processRealFiles(items);
+}
+
+// ── PROCESS ──
+async function processRealFiles(items){
+  showScanProgress(true);
+  const total=items.length;let done=0;
+  for(const {file,path} of items){
+    const ext=file.name.split('.').pop().toLowerCase();
+    const modified=new Date(file.lastModified).toISOString().split('T')[0];
+    const exists=FILES.find(f=>f.name===file.name&&f.size===file.size&&f.path===path);
+    if(!exists){FILES.push({id:nextId++,name:file.name,ext,size:file.size,modified,path,fav:false,opened:null,fileObj:file,blobUrl:null});}
+    done++;
+    const pct=Math.round((done/total)*100);
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('scan-pct').textContent=pct+'%';
+    document.getElementById('scan-log').textContent='Processing: '+file.name;
+    document.getElementById('scan-status-txt').textContent=`Scanning… ${done}/${total}`;
+    if(done%10===0) await new Promise(r=>setTimeout(r,0));
+  }
+  await new Promise(r=>setTimeout(r,300));
+  showScanProgress(false);
+  finishLoad();
+}
+function showScanProgress(show){
+  const el=document.getElementById('scan-progress');
+  el.style.display=show?'block':'none';
+  if(show){document.getElementById('progress-fill').style.width='0%';document.getElementById('scan-pct').textContent='0%';}
+}
+function finishLoad(){
+  document.getElementById('import-screen').style.display='none';
+  document.getElementById('files-section').style.display='block';
+  updateStats();renderFiles();updateBadges();
+  document.getElementById('topbar-sub').textContent=FILES.length+' document'+(FILES.length!==1?'s':'')+' loaded';
+  showToast('✅ '+FILES.length+' document'+(FILES.length!==1?'s':'')+' loaded');
+}
+
+// ── DRAG & DROP ──
+let dragC=0;
+document.body.addEventListener('dragenter',e=>{e.preventDefault();dragC++;document.getElementById('drag-overlay').classList.add('active');});
+document.body.addEventListener('dragleave',()=>{if(--dragC<=0){dragC=0;document.getElementById('drag-overlay').classList.remove('active');}});
+document.body.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';});
+document.body.addEventListener('drop',async e=>{
+  e.preventDefault();dragC=0;document.getElementById('drag-overlay').classList.remove('active');
+  const items=[...e.dataTransfer.items];const fileItems=[];
+  for(const item of items){
+    if(item.kind!=='file') continue;
+    const entry=item.webkitGetAsEntry?item.webkitGetAsEntry():null;
+    if(entry&&entry.isDirectory){await walkDirEntry(entry,entry.name+'/',fileItems);}
+    else{const f=item.getAsFile();if(f){const ext=f.name.split('.').pop().toLowerCase();if(SUPPORTED.includes(ext))fileItems.push({file:f,path:'/'});}}
+  }
+  if(!fileItems.length){showToast('⚠️ No supported documents dropped');return;}
+  processRealFiles(fileItems);
+});
+function walkDirEntry(entry,path,out){
+  return new Promise(resolve=>{
+    if(entry.isFile){entry.file(f=>{const ext=f.name.split('.').pop().toLowerCase();if(SUPPORTED.includes(ext))out.push({file:f,path});resolve();},()=>resolve());}
+    else if(entry.isDirectory){const r=entry.createReader();const read=()=>{r.readEntries(async es=>{if(!es.length){resolve();return;}for(const e of es)await walkDirEntry(e,path+e.name+(e.isDirectory?'/':''),out);read();},()=>resolve());};read();}
+    else resolve();
+  });
+}
+
+// ── STATS ──
+function updateStats(){
+  document.getElementById('stat-total').textContent=FILES.length;
+  document.getElementById('stat-size').textContent=fmtSize(FILES.reduce((a,f)=>a+f.size,0));
+  document.getElementById('stat-recent').textContent=recentOpened.length;
+}
+
+// ── FILTER & RENDER ──
+function getFiltered(){
+  let f=[...FILES];
+  if(currentCat==='pdf') f=f.filter(x=>x.ext==='pdf');
+  else if(currentCat==='word') f=f.filter(x=>['doc','docx'].includes(x.ext));
+  else if(currentCat==='excel') f=f.filter(x=>['xls','xlsx'].includes(x.ext));
+  else if(currentCat==='ppt') f=f.filter(x=>['ppt','pptx'].includes(x.ext));
+  else if(currentCat==='txt') f=f.filter(x=>['txt','md','csv'].includes(x.ext));
+  else if(currentCat==='fav') f=f.filter(x=>x.fav);
+  else if(currentCat==='recent') f=recentOpened.map(id=>FILES.find(x=>x.id===id)).filter(Boolean);
+  if(searchTerm) f=f.filter(x=>x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if(currentSort==='name') f.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(currentSort==='date') f.sort((a,b)=>b.modified.localeCompare(a.modified));
+  else if(currentSort==='size') f.sort((a,b)=>b.size-a.size);
+  else if(currentSort==='type') f.sort((a,b)=>a.ext.localeCompare(b.ext));
+  return f;
+}
+function renderFiles(){
+  const files=getFiltered(),list=document.getElementById('file-list'),empty=document.getElementById('empty-state-files');
+  list.innerHTML='';
+  if(!files.length){empty.style.display='flex';return;}
+  empty.style.display='none';
+  files.forEach(f=>list.appendChild(buildCard(f)));
+}
+function buildCard(f){
+  const d=document.createElement('div');
+  d.className='file-card no-select'+(f.fav?' fav':'');
+  d.innerHTML=`<div class="file-icon fi-${f.ext}">${f.ext.toUpperCase()}</div><div class="file-info"><div class="file-name">${esc(f.name)}</div><div class="file-meta"><span>${fmtSize(f.size)}</span><span style="color:var(--border)">•</span><span>${f.modified}</span><span style="color:var(--border)">•</span><span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.path)}</span></div></div><button class="file-actions-btn" onclick="event.stopPropagation();showInfo(${f.id})"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>`;
+  d.addEventListener('click',()=>showInfo(f.id));
+  return d;
+}
+function setCategory(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');currentCat=el.dataset.cat;renderFiles();}
+function setSort(el){document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');currentSort=el.dataset.sort;renderFiles();}
+function filterFiles(){const v=document.getElementById('search-input').value;searchTerm=v;document.getElementById('search-clear-btn').style.display=v?'block':'none';renderFiles();}
+function clearSearch(){document.getElementById('search-input').value='';searchTerm='';document.getElementById('search-clear-btn').style.display='none';renderFiles();}
+
+// ── INFO PANEL ──
+function showInfo(id){
+  selectedFile=FILES.find(f=>f.id===id);if(!selectedFile) return;
+  const f=selectedFile;
+  const ic=document.getElementById('info-icon');ic.className=`info-icon-big fi-${f.ext}`;ic.textContent=f.ext.toUpperCase();
+  document.getElementById('info-fname').textContent=f.name;
+  document.getElementById('info-rows').innerHTML=`<div class="info-row"><span class="info-label">📄 Type</span><span class="info-value">.${f.ext.toUpperCase()}</span></div><div class="info-row"><span class="info-label">📦 Size</span><span class="info-value">${fmtSize(f.size)}</span></div><div class="info-row"><span class="info-label">📅 Modified</span><span class="info-value">${f.modified}</span></div><div class="info-row"><span class="info-label">📂 Location</span><span class="info-value">${esc(f.path)}</span></div>`;
+  const btn=document.getElementById('fav-action-btn');
+  btn.innerHTML=f.fav?`<svg viewBox="0 0 24 24" fill="gold" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Unfavorite`:`<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Favorite`;
+  document.getElementById('info-panel-overlay').classList.add('show');
+}
+function closePanel(){document.getElementById('info-panel-overlay').classList.remove('show');}
+
+// ── OPEN FILE ──
+async function openFile(){
+  if(!selectedFile) return;
+  closePanel();
+  const f=selectedFile;
+  recentOpened=recentOpened.filter(id=>id!==f.id);recentOpened.unshift(f.id);
+  if(recentOpened.length>20)recentOpened=recentOpened.slice(0,20);
+  f.opened=new Date().toISOString();updateStats();updateBadges();
+
+  document.getElementById('viewer-title').textContent=f.name;
+  document.getElementById('viewer-type').textContent=f.ext.toUpperCase()+' · '+fmtSize(f.size);
+  const content=document.getElementById('viewer-content');
+  content.innerHTML='';
+
+  if(f.ext==='pdf'){
+    if(!f.blobUrl)f.blobUrl=URL.createObjectURL(f.fileObj);
+    const iframe=document.createElement('iframe');
+    iframe.src=f.blobUrl+'#toolbar=1&zoom=page-width';
+    iframe.style.cssText='width:100%;height:100%;border:none';
+    content.appendChild(iframe);
+  } else if(['txt','md'].includes(f.ext)){
+    const text=await f.fileObj.text();
+    const pre=document.createElement('pre');pre.className='txt-view';pre.textContent=text;
+    content.appendChild(pre);
+  } else if(f.ext==='csv'){
+    const text=await f.fileObj.text();
+    const rows=parseCSV(text);
+    if(!rows.length){content.innerHTML='<p style="padding:20px">Empty CSV</p>';return;}
+    const wrap=document.createElement('div');wrap.className='csv-view';
+    const tbl=document.createElement('table');tbl.className='csv-table';
+    rows.forEach((row,i)=>{const tr=document.createElement('tr');row.forEach(cell=>{const td=document.createElement(i===0?'th':'td');td.textContent=cell;tr.appendChild(td);});tbl.appendChild(tr);});
+    wrap.appendChild(tbl);content.appendChild(wrap);
+  } else {
+    // For .doc/.docx/.xls/.xlsx/.ppt/.pptx — offer download
+    const bUrl=URL.createObjectURL(f.fileObj);
+    const extMap={'doc':'📘','docx':'📘','xls':'📗','xlsx':'📗','ppt':'📙','pptx':'📙'};
+    content.innerHTML=`<div class="unsupported-view"><div class="unsupported-icon">${extMap[f.ext]||'📄'}</div><div class="unsupported-title">${esc(f.name)}</div><div class="unsupported-sub"><strong>.${f.ext.toUpperCase()}</strong> files cannot be rendered directly in the browser.<br><br>Click below to download it and open with Microsoft Office, LibreOffice, or Google Drive.</div><a href="${bUrl}" download="${esc(f.name)}" class="dl-btn">⬇️ Download &amp; Open</a><div style="font-size:11px;color:var(--text2);font-weight:600;margin-top:8px">${fmtSize(f.size)} · Modified: ${f.modified}</div></div>`;
+  }
+  document.getElementById('viewer-panel').classList.add('show');
+}
+function closeViewer(){document.getElementById('viewer-panel').classList.remove('show');}
+
+function parseCSV(text){
+  return text.split('\n').filter(r=>r.trim()).map(r=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<r.length;i++){if(r[i]==='"'){inQ=!inQ;}else if(r[i]===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=r[i];}}
+    cols.push(cur.trim());return cols;
+  });
+}
+
+// ── DOWNLOAD ──
+function downloadFile(){
+  const f=selectedFile;if(!f)return;
+  const url=URL.createObjectURL(f.fileObj);
+  const a=document.createElement('a');a.href=url;a.download=f.name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  showToast('⬇️ Downloading '+f.name);
+}
+
+// ── FAVORITE ──
+function toggleFavFile(){
+  if(!selectedFile)return;
+  selectedFile.fav=!selectedFile.fav;
+  document.getElementById('fav-action-btn').innerHTML=selectedFile.fav?`<svg viewBox="0 0 24 24" fill="gold" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Unfavorite`:`<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Favorite`;
+  renderFiles();updateBadges();showToast(selectedFile.fav?'⭐ Added to Favorites':'✕ Removed from Favorites');
+}
+
+// ── RENAME ──
+function renameFile(){if(!selectedFile)return;closePanel();document.getElementById('rename-input').value=selectedFile.name.replace(/\.[^.]+$/,'');document.getElementById('rename-panel-overlay').classList.add('show');}
+function closeRenamePanel(){document.getElementById('rename-panel-overlay').classList.remove('show');}
+function confirmRename(){const n=document.getElementById('rename-input').value.trim();if(!n||!selectedFile)return;const ext=selectedFile.name.match(/\.[^.]+$/)?.[0]||'';selectedFile.name=n+ext;closeRenamePanel();renderFiles();showToast('✅ File renamed');}
+
+// ── DELETE ──
+function deleteFile(){
+  if(!selectedFile)return;
+  if(selectedFile.blobUrl)URL.revokeObjectURL(selectedFile.blobUrl);
+  const idx=FILES.findIndex(f=>f.id===selectedFile.id);if(idx>-1)FILES.splice(idx,1);
+  recentOpened=recentOpened.filter(id=>id!==selectedFile.id);
+  closePanel();renderFiles();updateStats();updateBadges();
+  showToast('🗑️ File removed');
+  if(!FILES.length){
+    document.getElementById('files-section').style.display='none';
+    document.getElementById('import-screen').style.display='flex';
+    document.getElementById('import-screen').style.flexDirection='column';
+    document.getElementById('topbar-sub').textContent='Your Document Hub';
+  }
+}
+
+// ── PAGES ──
+function showPage(id){
+  ['page-home','page-favorites','page-recent','page-settings'].forEach(p=>{document.getElementById(p).style.display='none';});
+  document.getElementById(id).style.display='flex';document.getElementById(id).style.flexDirection='column';
+  ['nav-home','nav-recent','nav-favorites','nav-settings'].forEach(n=>document.getElementById(n).classList.remove('active'));
+  const m={'page-home':'nav-home','page-recent':'nav-recent','page-favorites':'nav-favorites','page-settings':'nav-settings'};
+  if(m[id])document.getElementById(m[id]).classList.add('active');
+  if(id==='page-favorites')renderFavList();
+  if(id==='page-recent')renderRecentList();
+}
+function renderFavList(){const favs=FILES.filter(f=>f.fav);const list=document.getElementById('fav-list');const empty=document.getElementById('fav-empty');list.innerHTML='';if(!favs.length){empty.style.display='flex';return;}empty.style.display='none';favs.forEach(f=>list.appendChild(buildCard(f)));}
+function renderRecentList(){const r=recentOpened.map(id=>FILES.find(f=>f.id===id)).filter(Boolean);const list=document.getElementById('recent-list');const empty=document.getElementById('recent-empty');list.innerHTML='';if(!r.length){empty.style.display='flex';return;}empty.style.display='none';r.forEach(f=>list.appendChild(buildCard(f)));}
+
+// ── DARK MODE ──
+function toggleDark(){isDark=!isDark;document.body.classList.toggle('dark',isDark);document.getElementById('dark-toggle').classList.toggle('on',isDark);}
+
+// ── CLEAR ALL ──
+function clearAll(){
+  if(!confirm('Remove all loaded files from DocVault?'))return;
+  FILES.forEach(f=>{if(f.blobUrl)URL.revokeObjectURL(f.blobUrl);});
+  FILES=[];recentOpened=[];
+  document.getElementById('files-section').style.display='none';
+  document.getElementById('import-screen').style.display='flex';
+  document.getElementById('import-screen').style.flexDirection='column';
+  document.getElementById('topbar-sub').textContent='Your Document Hub';
+  showPage('page-home');updateBadges();showToast('🔄 All files cleared');
+}
+
+// ── BADGES ──
+function updateBadges(){
+  const fc=FILES.filter(f=>f.fav).length,rc=recentOpened.length;
+  const fb=document.getElementById('fav-badge'),rb=document.getElementById('recent-badge');
+  fb.style.display=fc?'flex':'none';fb.textContent=fc;
+  rb.style.display=rc?'flex':'none';rb.textContent=rc>9?'9+':rc;
+}
+
+// ── TOAST ──
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ── UTILS ──
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(1)+' GB';}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('page-home').style.display='flex';document.getElementById('page-home').style.flexDirection='column';});
+</script>
+</body>
+</html>
